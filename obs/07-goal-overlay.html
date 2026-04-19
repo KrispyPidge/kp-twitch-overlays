@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KP · Goal Overlay (transparent)</title>
+<link rel="stylesheet" href="ledge.css">
+<style>body{background:transparent}</style>
+</head>
+<body>
+<div id="root" style="position:absolute;inset:0"></div>
+<script src="ledge.js"></script>
+<script>
+  // Standalone goal bar source. Drop on any scene where you want only the goal.
+  const qs = new URLSearchParams(location.search);
+  const pct = Number(qs.get('pct') || 68);
+  const root = document.getElementById('root');
+  const goal = LedgeWatch.goal(root, {
+    title: 'RECON QUOTA',
+    caption: 'eyes on the ledge · 50 concurrent witnesses',
+    percent: pct,
+    target: 50,
+    unit: 'witness',
+    unitPlural: 'witnesses',
+    legend: '★ each ◆ marks a witness',
+  });
+  LedgeWatch.bind({ goal });
+  window.LedgeWatch_test = { goal: (p) => goal.set(p) };
+</script>
+</body>
+</html>

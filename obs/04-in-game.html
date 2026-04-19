@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KP · In-Game HUD</title>
+<link rel="stylesheet" href="ledge.css">
+<style>
+  /* Transparent for OBS. HUD layers only — webcam + game capture are separate sources. */
+  body { background: transparent; }
+  /* Hide the webcam placeholder in production: add ?hidecam=1 to URL. */
+  body.nocam .cam { display: none; }
+  /* This scene does NOT use the rooftop backdrop — game capture goes behind. */
+</style>
+</head>
+<body>
+<div id="root" style="position:absolute;inset:0"></div>
+<script src="ledge.js"></script>
+<script>
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('hidecam') === '1') document.body.classList.add('nocam');
+
+  const root = document.getElementById('root');
+
+  // Top strip (REC / CAM / timestamp) — works over game capture
+  LedgeWatch.topStrip(root);
+
+  // Webcam frame placeholder — in OBS, overlay your real webcam source on top
+  // at the same coords (40,130 · 380×280). Or append ?hidecam=1 to hide.
+  LedgeWatch.cam(root, { x: 40, y: 130, w: 380, h: 280 });
+
+  // Uptime timer
+  LedgeWatch.timer(root, { label: 'UPTIME', startSeconds: 0 });
+
+  // Goal bar — RECON QUOTA (concurrent viewers). Update live via postMessage {kp:'goal', percent: N}
+  const goal = LedgeWatch.goal(root, {
+    title: 'RECON QUOTA',
+    caption: 'eyes on the ledge · 50 concurrent witnesses',
+    percent: 68,
+    target: 50,
+    unit: 'witness',
+    unitPlural: 'witnesses',
+    legend: '★ each ◆ marks a witness',
+  });
+
+  // Alerts — listen for postMessage {kp:'alert', type, name, amount, msg}
+  const alertHost = LedgeWatch.alertHost(root);
+
+  // Chat — set simulate:false in production; feed via postMessage {kp:'chat', u,c,m}
+  const chat = LedgeWatch.chat(root, { simulate: qs.get('sim') !== '0' });
+
+  // Game card — paper slip. Update text via window.setGame(title, meta)
+  const card = document.createElement('div');
+  card.style.cssText = 'position:absolute;top:440px;left:40px;width:380px;background:var(--paper);color:var(--ink);padding:12px 16px;transform:rotate(-1deg);box-shadow:4px 4px 0 rgba(0,0,0,0.55);font-family:Special Elite;z-index:30';
+  card.innerHTML = `
+    <div style="font-size:12px;letter-spacing:3px;opacity:0.7">SURVEILLANCE TARGET PLAYING:</div>
+    <div class="title" style="font-family:'Rubik Mono One';font-size:26px;letter-spacing:1px;margin-top:2px">ARC RAIDERS</div>
+    <div class="meta" style="font-size:13px;opacity:0.7;margin-top:2px">lobby 7 · 2h 14m logged · “locked in”</div>`;
+  root.appendChild(card);
+  window.setGame = (title, meta) => {
+    card.querySelector('.title').textContent = title;
+    if (meta) card.querySelector('.meta').textContent = meta;
+  };
+
+  // Ticker
+  LedgeWatch.ticker(root);
+
+  // Bind postMessage bridge (Streamer.bot / bot relays)
+  LedgeWatch.bind({ goal, alertHost, chat });
+
+  // Expose for quick debug in the console: LedgeWatch_test.follow()
+  window.LedgeWatch_test = {
+    follow: () => alertHost.fire({ type: 'follow', name: 'flock_boss', msg: 'followed the flock' }),
+    sub:    () => alertHost.fire({ type: 'sub',    name: 'breadwhisperer', amount: 'Tier 3 × 6mo', msg: 'resubbed · 6 months deep' }),
+    bits:   () => alertHost.fire({ type: 'bits',   name: 'TacticalRalph',  amount: '500 bits', msg: 'tossed 500 bits' }),
+    donate: () => alertHost.fire({ type: 'donate', name: 'anonymous',      amount: '$25.00',    msg: 'buy yourself a sandwich' }),
+    raid:   () => alertHost.fire({ type: 'raid',   name: 'Vost0k_stream',  amount: '42 raiders', msg: 'raiding with 42' }),
+    goal:   (p) => goal.set(p),
+  };
+</script>
+</body>
+</html>

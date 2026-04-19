@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KP · Ticker (transparent)</title>
+<link rel="stylesheet" href="ledge.css">
+<style>body{background:transparent}</style>
+</head>
+<body>
+<div id="root" style="position:absolute;inset:0"></div>
+<script src="ledge.js"></script>
+<script>
+  const root = document.getElementById('root');
+  LedgeWatch.ticker(root);
+</script>
+</body>
+</html>

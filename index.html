@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KP · OBS Source Index</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rubik+Mono+One&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0812 radial-gradient(ellipse at top, #2a1858 0%, #0a0812 60%);
+    color: #e8e4f0; font-family: 'JetBrains Mono', monospace; min-height: 100vh;
+    padding: 48px 64px;
+  }
+  h1 { font-family: 'Rubik Mono One'; font-size: 42px; letter-spacing: 3px; color: #f0a830; margin-bottom: 6px; }
+  .sub { font-family: 'Special Elite'; font-size: 18px; color: #8870c0; margin-bottom: 40px; letter-spacing: 1px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; max-width: 1400px; }
+  .card {
+    background: rgba(20,14,36,0.75); border: 1px solid rgba(240,168,48,0.3);
+    padding: 20px 22px; text-decoration: none; color: inherit;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+    position: relative; overflow: hidden;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #f0a830; box-shadow: 0 8px 30px rgba(240,168,48,0.15); }
+  .card .num { font-family: 'Rubik Mono One'; font-size: 11px; color: #8870c0; letter-spacing: 3px; }
+  .card .name { font-family: 'Rubik Mono One'; font-size: 22px; color: #f0a830; letter-spacing: 2px; margin: 6px 0 10px; }
+  .card .desc { font-size: 13px; color: #b8b0d0; line-height: 1.5; }
+  .card .path { font-size: 11px; color: #6b628a; margin-top: 12px; letter-spacing: 1px; }
+  .card .tag { position: absolute; top: 14px; right: 14px; font-size: 9px; letter-spacing: 2px; color: #8870c0; border: 1px solid #8870c055; padding: 2px 6px; }
+  h2 { font-family: 'Rubik Mono One'; font-size: 16px; letter-spacing: 3px; color: #8870c0; margin: 36px 0 16px; border-top: 1px dashed #8870c055; padding-top: 22px; }
+  .plan {
+    margin-top: 48px; padding: 24px; background: rgba(20,14,36,0.6); border: 1px dashed rgba(240,168,48,0.3);
+    font-size: 13px; line-height: 1.7; color: #c8c0e0;
+  }
+  .plan a { color: #f0a830; }
+  code { background: rgba(0,0,0,0.35); padding: 1px 6px; color: #f0a830; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>LEDGE WATCH · OBS SOURCES</h1>
+  <div class="sub">KrispyPidgeon overlay system · 1920×1080 · surveillance + dusk rooftop</div>
+
+  <h2>FULL-SCREEN SCENES</h2>
+  <div class="grid">
+    <a class="card" href="obs/01-starting-soon.html"><span class="tag">SCENE</span>
+      <div class="num">01</div><div class="name">STARTING SOON</div>
+      <div class="desc">Purple dusk backdrop, ransom-note STARTING with live countdown, ticker. Stage 1 of every stream.</div>
+      <div class="path">obs/01-starting-soon.html</div>
+    </a>
+    <a class="card" href="obs/02-brb.html"><span class="tag">SCENE</span>
+      <div class="num">02</div><div class="name">BRB</div>
+      <div class="desc">Subject has flown off the ledge. Identical stage, BRB typography. Mute mic filter here.</div>
+      <div class="path">obs/02-brb.html</div>
+    </a>
+    <a class="card" href="obs/03-ending.html"><span class="tag">SCENE</span>
+      <div class="num">03</div><div class="name">ENDING</div>
+      <div class="desc">Archive sealed. Tapes confiscated. Plays while shoutouts & raid target are queued.</div>
+      <div class="path">obs/03-ending.html</div>
+    </a>
+    <a class="card" href="obs/05-just-chatting.html"><span class="tag">SCENE</span>
+      <div class="num">05</div><div class="name">JUST CHATTING</div>
+      <div class="desc">Big centered webcam slot (920×680 @ 510,110). Topic card top-left. Goal + chat + alerts + ticker.</div>
+      <div class="path">obs/05-just-chatting.html</div>
+    </a>
+  </div>
+
+  <h2>HUD OVERLAYS (TRANSPARENT)</h2>
+  <div class="grid">
+    <a class="card" href="obs/04-in-game.html?hidecam=1"><span class="tag">HUD</span>
+      <div class="num">04</div><div class="name">IN-GAME HUD</div>
+      <div class="desc">Transparent HUD over game capture: top strip, webcam frame (x40,y130,380×280), goal, game card, chat, alerts, uptime, ticker.</div>
+      <div class="path">obs/04-in-game.html?hidecam=1</div>
+    </a>
+    <a class="card" href="obs/06-alerts-overlay.html"><span class="tag">REUSABLE</span>
+      <div class="num">06</div><div class="name">ALERTS ONLY</div>
+      <div class="desc">Just the alert card slot. Drop on any scene as a global alert layer listening for <code>{kp:'alert'}</code>.</div>
+      <div class="path">obs/06-alerts-overlay.html</div>
+    </a>
+    <a class="card" href="obs/07-goal-overlay.html"><span class="tag">REUSABLE</span>
+      <div class="num">07</div><div class="name">GOAL BAR ONLY</div>
+      <div class="desc">Bread-quota bar, nothing else. Pass <code>?pct=65</code> or update via postMessage.</div>
+      <div class="path">obs/07-goal-overlay.html</div>
+    </a>
+    <a class="card" href="obs/08-ticker-overlay.html"><span class="tag">REUSABLE</span>
+      <div class="num">08</div><div class="name">TICKER ONLY</div>
+      <div class="desc">Scrolling paranoid-pigeon thoughts along the bottom. Drop on any scene.</div>
+      <div class="path">obs/08-ticker-overlay.html</div>
+    </a>
+  </div>
+
+  <div class="plan">
+    <strong style="color:#f0a830">📋 FULL PLAN + EVENT WIRING</strong><br/>
+    OBS scene composition, Streamer.bot triggers, postMessage event shapes, category-change hooks, palette swap instructions:<br/><br/>
+    → <a href="obs/README.md">obs/README.md</a><br/><br/>
+    Or view the interactive mockup with all scene tweaks: <a href="overlays.html">overlays.html</a>
+  </div>
+</body>
+</html>

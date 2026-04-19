@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KP · Just Chatting</title>
+<link rel="stylesheet" href="ledge.css">
+</head>
+<body class="with-bg">
+<div id="root" style="position:absolute;inset:0"></div>
+<script src="ledge.js"></script>
+<script>
+  const qs = new URLSearchParams(location.search);
+  const root = document.getElementById('root');
+
+  LedgeWatch.rooftop(root);
+  LedgeWatch.topStrip(root);
+
+  // Big webcam slot. Place real webcam source in OBS at (510,110 · 920×680).
+  if (qs.get('hidecam') !== '1') LedgeWatch.cam(root, { x: 510, y: 110, w: 920, h: 680 });
+
+  // Timer (labeled ON AIR for chatting scene)
+  LedgeWatch.timer(root, { label: 'ON AIR' });
+
+  // Goal bar — RECON QUOTA (concurrent viewers)
+  const goal = LedgeWatch.goal(root, {
+    title: 'RECON QUOTA',
+    caption: 'eyes on the ledge · 50 concurrent witnesses',
+    percent: 68,
+    target: 50,
+    unit: 'witness',
+    unitPlural: 'witnesses',
+    legend: '★ each ◆ marks a witness',
+  });
+
+  // Alerts host
+  const alertHost = LedgeWatch.alertHost(root);
+
+  // Chat
+  const chat = LedgeWatch.chat(root, { simulate: qs.get('sim') !== '0' });
+
+  // Topic card (paper slip)
+  const topic = document.createElement('div');
+  topic.style.cssText = 'position:absolute;top:150px;left:56px;width:420px;background:var(--paper);color:var(--ink);padding:22px 26px;transform:rotate(-2deg);box-shadow:6px 6px 0 rgba(0,0,0,0.6);font-family:Special Elite;z-index:30';
+  topic.innerHTML = `
+    <div style="background:var(--stamp);color:var(--paper);display:inline-block;padding:4px 10px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;transform:rotate(-3deg);margin-bottom:10px;box-shadow:2px 2px 0 rgba(0,0,0,0.3)">TOPIC · EVIDENCE</div>
+    <div class="title" style="font-family:'Rubik Mono One';font-size:44px;line-height:1;letter-spacing:1px">PIGEONS<br/>ARE <span style="background:var(--ink);color:var(--paper);padding:0 6px">STATE</span><br/>SURVEILLANCE?</div>
+    <div class="body" style="font-size:16px;margin-top:14px;opacity:0.8">a 3-hour deep dive. bring bread. bring questions. bring an aluminum foil hat.</div>`;
+  root.appendChild(topic);
+  window.setTopic = (htmlTitle, htmlBody) => {
+    topic.querySelector('.title').innerHTML = htmlTitle;
+    if (htmlBody) topic.querySelector('.body').innerHTML = htmlBody;
+  };
+
+  LedgeWatch.ticker(root);
+  LedgeWatch.bind({ goal, alertHost, chat });
+
+  window.LedgeWatch_test = {
+    follow: () => alertHost.fire({ type: 'follow', name: 'flock_boss', msg: 'followed the flock' }),
+    sub:    () => alertHost.fire({ type: 'sub',    name: 'breadwhisperer', amount: 'Tier 3 × 6mo', msg: 'resubbed · 6 months deep' }),
+    bits:   () => alertHost.fire({ type: 'bits',   name: 'TacticalRalph',  amount: '500 bits', msg: 'tossed 500 bits' }),
+    donate: () => alertHost.fire({ type: 'donate', name: 'anonymous',      amount: '$25.00',    msg: 'buy yourself a sandwich' }),
+    raid:   () => alertHost.fire({ type: 'raid',   name: 'Vost0k_stream',  amount: '42 raiders', msg: 'raiding with 42' }),
+    goal:   (p) => goal.set(p),
+  };
+</script>
+</body>
+</html>

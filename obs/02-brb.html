@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KP · BRB</title>
+<link rel="stylesheet" href="ledge.css">
+</head>
+<body class="with-bg">
+<div id="root" style="position:absolute;inset:0"></div>
+<script src="ledge.js"></script>
+<script>
+  const root = document.getElementById('root');
+  LedgeWatch.rooftop(root);
+  LedgeWatch.topStrip(root);
+  LedgeWatch.typo(root, 'BRB', [
+    'subject has flown off. feed continues.',
+    '(leave bread. do not look directly at camera.)',
+  ], { logo: 'assets/logo.png' });
+  LedgeWatch.ticker(root);
+</script>
+</body>
+</html>
