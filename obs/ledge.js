@@ -433,6 +433,84 @@
   applyAutoPalette();
   setInterval(applyAutoPalette, 10 * 60 * 1000);
 
+  // ---- Live Twitch chat (anonymous IRC WebSocket) ----
+  // No auth, no SE dependency. Reconnects automatically on drop.
+  // Call with channel name; each incoming message fires onMessage({u, c, m}).
+  function twitchChat(channel, onMessage) {
+    if (!channel) return { close: () => {} };
+    let ws, closed = false, retry = 0;
+    const chan = channel.toLowerCase().replace(/^#/, '');
+    function connect() {
+      ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+      ws.onopen = () => {
+        retry = 0;
+        ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+        ws.send('PASS SCHMOOPIIE');
+        ws.send('NICK justinfan' + Math.floor(Math.random() * 100000));
+        ws.send('JOIN #' + chan);
+      };
+      ws.onmessage = (e) => {
+        const raw = e.data; if (!raw) return;
+        raw.split('\r\n').forEach((line) => {
+          if (!line) return;
+          if (line.startsWith('PING')) { ws.send('PONG' + line.slice(4)); return; }
+          // Only handle PRIVMSG lines — ignore joins/parts/modes
+          const privmsgIdx = line.indexOf(' PRIVMSG ');
+          if (privmsgIdx === -1) return;
+          // Parse tags (optional prefix starting with @)
+          let tags = {};
+          let rest = line;
+          if (rest.startsWith('@')) {
+            const sp = rest.indexOf(' ');
+            rest.slice(1, sp).split(';').forEach((kv) => {
+              const eq = kv.indexOf('=');
+              if (eq > -1) tags[kv.slice(0, eq)] = kv.slice(eq + 1);
+            });
+            rest = rest.slice(sp + 1);
+          }
+          const msgStart = rest.indexOf(' :');
+          if (msgStart === -1) return;
+          const m = rest.slice(msgStart + 2);
+          const nick = tags['display-name'] || (rest.match(/^:([^!]+)!/) || [,'user'])[1];
+          const color = tags.color || '#f0a830';
+          try { onMessage({ u: nick, c: color, m }); } catch (_) {}
+        });
+      };
+      ws.onclose = () => {
+        if (closed) return;
+        retry = Math.min(retry + 1, 6);
+        setTimeout(connect, 1000 * retry);
+      };
+      ws.onerror = () => { try { ws.close(); } catch (_) {} };
+    }
+    connect();
+    return { close: () => { closed = true; try { ws.close(); } catch (_) {} } };
+  }
+
+  // ---- Viewer count poll (DecAPI — public, no auth) ----
+  // Every 30s, fetches current concurrent viewer count for `channel` and
+  // reports percent = viewers / target * 100 via onPercent.
+  function viewerPoll(channel, target, onPercent) {
+    if (!channel || !target) return { stop: () => {} };
+    let stopped = false, h = null;
+    const url = `https://decapi.me/twitch/viewercount/${encodeURIComponent(channel)}`;
+    async function tick() {
+      if (stopped) return;
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        const txt = (await r.text()).trim();
+        const n = Number(txt);
+        if (!isNaN(n) && n >= 0) {
+          const pct = Math.min(100, (n / target) * 100);
+          onPercent(pct, n);
+        }
+      } catch (_) { /* silent */ }
+    }
+    tick();
+    h = setInterval(tick, 30000);
+    return { stop: () => { stopped = true; clearInterval(h); } };
+  }
+
   // ---- External event bridge ----
   // Accepts postMessage from parent (or chrome extension / bot) in the shape:
   //   {kp:'alert',   type:'sub', name:'...', amount:'Tier 3', msg:'...'}
@@ -452,6 +530,7 @@
   global.LedgeWatch = {
     rooftop, topStrip, goal, alertHost, timer, countdown, chat, cam, ticker, typo, bind,
     setPalette, applyAutoPalette,
+    twitchChat, viewerPoll,
     CHAT_POOL, THOUGHTS,
   };
 })(window);

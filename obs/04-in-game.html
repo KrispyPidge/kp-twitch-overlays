@@ -19,6 +19,19 @@
   const qs = new URLSearchParams(location.search);
   if (qs.get('hidecam') === '1') document.body.classList.add('nocam');
 
+  // URL params (all optional):
+  //   channel   — Twitch channel: enables live chat + viewer-count goal polling
+  //   game      — game title shown in the game card
+  //   gameMeta  — subtitle line on the game card
+  //   target    — recon-quota target (default 50)
+  //   targetLabel — override the caption beneath the goal title
+  //   sim       — set to 0 to disable simulated chat (auto-off when channel is set)
+  const channel  = qs.get('channel') || '';
+  const gameName = qs.get('game')     || 'ARC RAIDERS';
+  const gameMeta = qs.get('gameMeta') || 'lobby 7 · 2h 14m logged · “locked in”';
+  const target   = Number(qs.get('target')) || 50;
+  const tgtLbl   = qs.get('targetLabel') || `eyes on the ledge · ${target} concurrent witnesses`;
+
   const root = document.getElementById('root');
 
   // Top strip (REC / CAM / timestamp) — works over game capture
@@ -34,9 +47,9 @@
   // Goal bar — RECON QUOTA (concurrent viewers). Update live via postMessage {kp:'goal', percent: N}
   const goal = LedgeWatch.goal(root, {
     title: 'RECON QUOTA',
-    caption: 'eyes on the ledge · 50 concurrent witnesses',
-    percent: 68,
-    target: 50,
+    caption: tgtLbl,
+    percent: 0,
+    target: target,
     unit: 'witness',
     unitPlural: 'witnesses',
     legend: '★ each ◆ marks a witness',
@@ -45,16 +58,23 @@
   // Alerts — listen for postMessage {kp:'alert', type, name, amount, msg}
   const alertHost = LedgeWatch.alertHost(root);
 
-  // Chat — set simulate:false in production; feed via postMessage {kp:'chat', u,c,m}
-  const chat = LedgeWatch.chat(root, { simulate: qs.get('sim') !== '0' });
+  // Chat — live when channel param is set, otherwise simulated unless ?sim=0
+  const simulate = channel ? false : (qs.get('sim') !== '0');
+  const chat = LedgeWatch.chat(root, { simulate });
+  if (channel) {
+    LedgeWatch.twitchChat(channel, (m) => chat.add(m));
+    LedgeWatch.viewerPoll(channel, target, (pct) => goal.set(pct));
+  }
 
   // Game card — paper slip. Update text via window.setGame(title, meta)
   const card = document.createElement('div');
   card.style.cssText = 'position:absolute;top:440px;left:40px;width:380px;background:var(--paper);color:var(--ink);padding:12px 16px;transform:rotate(-1deg);box-shadow:4px 4px 0 rgba(0,0,0,0.55);font-family:Special Elite;z-index:30';
   card.innerHTML = `
     <div style="font-size:12px;letter-spacing:3px;opacity:0.7">SURVEILLANCE TARGET PLAYING:</div>
-    <div class="title" style="font-family:'Rubik Mono One';font-size:26px;letter-spacing:1px;margin-top:2px">ARC RAIDERS</div>
-    <div class="meta" style="font-size:13px;opacity:0.7;margin-top:2px">lobby 7 · 2h 14m logged · “locked in”</div>`;
+    <div class="title" style="font-family:'Rubik Mono One';font-size:26px;letter-spacing:1px;margin-top:2px"></div>
+    <div class="meta" style="font-size:13px;opacity:0.7;margin-top:2px"></div>`;
+  card.querySelector('.title').textContent = gameName;
+  card.querySelector('.meta').textContent = gameMeta;
   root.appendChild(card);
   window.setGame = (title, meta) => {
     card.querySelector('.title').textContent = title;
@@ -64,7 +84,7 @@
   // Ticker
   LedgeWatch.ticker(root);
 
-  // Bind postMessage bridge (Streamer.bot / bot relays)
+  // Bind postMessage bridge (SE widget / bot relays)
   LedgeWatch.bind({ goal, alertHost, chat });
 
   // Expose for quick debug in the console: LedgeWatch_test.follow()

@@ -12,6 +12,19 @@
   const qs = new URLSearchParams(location.search);
   const root = document.getElementById('root');
 
+  // URL params (all optional):
+  //   channel     — Twitch channel: enables live chat + viewer-count goal polling
+  //   topic       — topic card title (HTML allowed, e.g. "STREAM<br/>TOPIC")
+  //   topicBody   — topic card body text
+  //   target      — recon-quota target (default 50)
+  //   targetLabel — override the caption beneath the goal title
+  //   sim         — set to 0 to disable simulated chat (auto-off when channel is set)
+  const channel   = qs.get('channel')   || '';
+  const topicText = qs.get('topic')     || 'PIGEONS<br/>ARE <span style="background:var(--ink);color:var(--paper);padding:0 6px">STATE</span><br/>SURVEILLANCE?';
+  const topicBody = qs.get('topicBody') || 'a 3-hour deep dive. bring bread. bring questions. bring an aluminum foil hat.';
+  const target    = Number(qs.get('target')) || 50;
+  const tgtLbl    = qs.get('targetLabel') || `eyes on the ledge · ${target} concurrent witnesses`;
+
   LedgeWatch.rooftop(root);
   LedgeWatch.topStrip(root);
 
@@ -24,9 +37,9 @@
   // Goal bar — RECON QUOTA (concurrent viewers)
   const goal = LedgeWatch.goal(root, {
     title: 'RECON QUOTA',
-    caption: 'eyes on the ledge · 50 concurrent witnesses',
-    percent: 68,
-    target: 50,
+    caption: tgtLbl,
+    percent: 0,
+    target: target,
     unit: 'witness',
     unitPlural: 'witnesses',
     legend: '★ each ◆ marks a witness',
@@ -35,16 +48,21 @@
   // Alerts host
   const alertHost = LedgeWatch.alertHost(root);
 
-  // Chat
-  const chat = LedgeWatch.chat(root, { simulate: qs.get('sim') !== '0' });
+  // Chat — live when channel param is set, otherwise simulated unless ?sim=0
+  const simulate = channel ? false : (qs.get('sim') !== '0');
+  const chat = LedgeWatch.chat(root, { simulate });
+  if (channel) {
+    LedgeWatch.twitchChat(channel, (m) => chat.add(m));
+    LedgeWatch.viewerPoll(channel, target, (pct) => goal.set(pct));
+  }
 
   // Topic card (paper slip)
   const topic = document.createElement('div');
   topic.style.cssText = 'position:absolute;top:150px;left:56px;width:420px;background:var(--paper);color:var(--ink);padding:22px 26px;transform:rotate(-2deg);box-shadow:6px 6px 0 rgba(0,0,0,0.6);font-family:Special Elite;z-index:30';
   topic.innerHTML = `
     <div style="background:var(--stamp);color:var(--paper);display:inline-block;padding:4px 10px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;transform:rotate(-3deg);margin-bottom:10px;box-shadow:2px 2px 0 rgba(0,0,0,0.3)">TOPIC · EVIDENCE</div>
-    <div class="title" style="font-family:'Rubik Mono One';font-size:44px;line-height:1;letter-spacing:1px">PIGEONS<br/>ARE <span style="background:var(--ink);color:var(--paper);padding:0 6px">STATE</span><br/>SURVEILLANCE?</div>
-    <div class="body" style="font-size:16px;margin-top:14px;opacity:0.8">a 3-hour deep dive. bring bread. bring questions. bring an aluminum foil hat.</div>`;
+    <div class="title" style="font-family:'Rubik Mono One';font-size:44px;line-height:1;letter-spacing:1px">${topicText}</div>
+    <div class="body" style="font-size:16px;margin-top:14px;opacity:0.8">${topicBody}</div>`;
   root.appendChild(topic);
   window.setTopic = (htmlTitle, htmlBody) => {
     topic.querySelector('.title').innerHTML = htmlTitle;
