@@ -41,6 +41,7 @@
 
   // Timer (labeled ON AIR for chatting scene; syncs to Twitch uptime when channel set)
   const uptime = LedgeWatch.timer(root, { label: 'ON AIR' });
+  if (qs.get('hidetimer') === '1') uptime.el.style.display = 'none';
 
   // Goal bar — RECON QUOTA (concurrent viewers)
   const goal = LedgeWatch.goal(root, {
@@ -52,6 +53,7 @@
     unitPlural: 'witnesses',
     legend: '★ each ◆ marks a witness',
   });
+  if (qs.get('hidegoal') === '1') goal.el.style.display = 'none';
 
   // Alerts host
   const alertHost = LedgeWatch.alertHost(root);
@@ -59,6 +61,7 @@
   // Chat — live when channel param is set, otherwise simulated unless ?sim=0
   const simulate = channel ? false : (qs.get('sim') !== '0');
   const chat = LedgeWatch.chat(root, { simulate });
+  if (qs.get('hidechat') === '1') chat.el.style.display = 'none';
   if (channel) {
     LedgeWatch.twitchChat(channel, (m) => chat.add(m));
     LedgeWatch.viewerPoll(channel, target, (pct) => goal.set(pct));
@@ -75,6 +78,7 @@
     <div style="background:var(--stamp);color:var(--paper);display:inline-block;padding:4px 10px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;transform:rotate(-3deg);margin-bottom:10px;box-shadow:2px 2px 0 rgba(0,0,0,0.3)">TOPIC · EVIDENCE</div>
     <div class="title" style="font-family:'Rubik Mono One';font-size:${topicFont}px;line-height:1.05;letter-spacing:1px;overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;hyphens:auto">${topicText}</div>
     <div class="body" style="font-size:16px;margin-top:14px;opacity:0.8;overflow-wrap:break-word;word-wrap:break-word">${topicBody}</div>`;
+  if (qs.get('hidetopic') === '1') topic.style.display = 'none';
   root.appendChild(topic);
   window.setTopic = (htmlTitle, htmlBody) => {
     topic.querySelector('.title').innerHTML = htmlTitle;
@@ -84,6 +88,7 @@
     const f = TOPIC_SIZES[size] || TOPIC_SIZES.md;
     topic.querySelector('.title').style.fontSize = f + 'px';
   };
+  window.hideTopic = (hidden = true) => { topic.style.display = hidden ? 'none' : ''; };
 
   LedgeWatch.ticker(root);
   LedgeWatch.bind({ goal, alertHost, chat });

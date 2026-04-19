@@ -45,6 +45,7 @@
 
   // Uptime timer (syncs to real Twitch stream uptime when channel is set)
   const uptime = LedgeWatch.timer(root, { label: 'UPTIME', startSeconds: 0 });
+  if (qs.get('hidetimer') === '1') uptime.el.style.display = 'none';
 
   // Goal bar — RECON QUOTA (concurrent viewers). Update live via postMessage {kp:'goal', percent: N}
   const goal = LedgeWatch.goal(root, {
@@ -56,6 +57,7 @@
     unitPlural: 'witnesses',
     legend: '★ each ◆ marks a witness',
   });
+  if (qs.get('hidegoal') === '1') goal.el.style.display = 'none';
 
   // Alerts — listen for postMessage {kp:'alert', type, name, amount, msg}
   const alertHost = LedgeWatch.alertHost(root);
@@ -63,8 +65,10 @@
   // Chat — live when channel param is set, otherwise simulated unless ?sim=0
   const simulate = channel ? false : (qs.get('sim') !== '0');
   const chat = LedgeWatch.chat(root, { simulate });
+  if (qs.get('hidechat') === '1') chat.el.style.display = 'none';
 
   // Game card — paper slip. Update text via window.setGame(title, meta)
+  // Hide entirely with ?hidegame=1 (useful when webcam is off and floating UI looks odd)
   const card = document.createElement('div');
   card.style.cssText = 'position:absolute;top:440px;left:40px;width:380px;background:var(--paper);color:var(--ink);padding:12px 16px;transform:rotate(-1deg);box-shadow:4px 4px 0 rgba(0,0,0,0.55);font-family:Special Elite;z-index:30';
   card.innerHTML = `
@@ -73,11 +77,13 @@
     <div class="meta" style="font-size:13px;opacity:0.7;margin-top:2px"></div>`;
   card.querySelector('.title').textContent = gameName;
   card.querySelector('.meta').textContent = gameMeta;
+  if (qs.get('hidegame') === '1') card.style.display = 'none';
   root.appendChild(card);
   window.setGame = (title, meta) => {
     card.querySelector('.title').textContent = title;
     if (meta) card.querySelector('.meta').textContent = meta;
   };
+  window.hideGame = (hidden = true) => { card.style.display = hidden ? 'none' : ''; };
 
   // Live Twitch wiring when channel is set
   if (channel) {
