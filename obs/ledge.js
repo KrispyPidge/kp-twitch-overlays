@@ -511,6 +511,47 @@
     return { stop: () => { stopped = true; clearInterval(h); } };
   }
 
+  // ---- Stream info poll (DecAPI — public, no auth) ----
+  // Every 60s, fetches current game, title, and uptime for `channel`.
+  // Fires onUpdate({ game, title, uptime }) only when one of them changes.
+  function streamInfoPoll(channel, onUpdate, intervalMs) {
+    if (!channel) return { stop: () => {} };
+    let stopped = false, h = null, last = {};
+    const encCh = encodeURIComponent(channel);
+    const urls = {
+      game:   `https://decapi.me/twitch/game/${encCh}`,
+      title:  `https://decapi.me/twitch/title/${encCh}`,
+      uptime: `https://decapi.me/twitch/uptime/${encCh}`,
+    };
+    function fetchText(u) {
+      return fetch(u, { cache: 'no-store' })
+        .then((r) => r.text()).then((t) => (t || '').trim())
+        .catch(() => '');
+    }
+    async function tick() {
+      if (stopped) return;
+      try {
+        const [g, t, u] = await Promise.all([
+          fetchText(urls.game), fetchText(urls.title), fetchText(urls.uptime),
+        ]);
+        // DecAPI returns things like "channel is offline" — treat as empty
+        const offline = /offline|not (currently )?live|no longer/i;
+        const info = {
+          game:   offline.test(g) ? '' : g,
+          title:  offline.test(t) ? '' : t,
+          uptime: offline.test(u) ? '' : u,
+        };
+        if (info.game !== last.game || info.title !== last.title || info.uptime !== last.uptime) {
+          last = info;
+          try { onUpdate(info); } catch (_) {}
+        }
+      } catch (_) {}
+    }
+    tick();
+    h = setInterval(tick, intervalMs || 60000);
+    return { stop: () => { stopped = true; clearInterval(h); } };
+  }
+
   // ---- External event bridge ----
   // Accepts postMessage from parent (or chrome extension / bot) in the shape:
   //   {kp:'alert',   type:'sub', name:'...', amount:'Tier 3', msg:'...'}
@@ -530,7 +571,7 @@
   global.LedgeWatch = {
     rooftop, topStrip, goal, alertHost, timer, countdown, chat, cam, ticker, typo, bind,
     setPalette, applyAutoPalette,
-    twitchChat, viewerPoll,
+    twitchChat, viewerPoll, streamInfoPoll,
     CHAT_POOL, THOUGHTS,
   };
 })(window);

@@ -20,17 +20,19 @@
   if (qs.get('hidecam') === '1') document.body.classList.add('nocam');
 
   // URL params (all optional):
-  //   channel   — Twitch channel: enables live chat + viewer-count goal polling
-  //   game      — game title shown in the game card
-  //   gameMeta  — subtitle line on the game card
-  //   target    — recon-quota target (default 50)
+  //   channel     — Twitch channel: live chat + viewer-count goal + auto game/title/uptime
+  //   game        — pin game title (overrides Twitch auto-update)
+  //   gameMeta    — pin subtitle (overrides Twitch auto-update)
+  //   target      — recon-quota target (default 50)
   //   targetLabel — override the caption beneath the goal title
-  //   sim       — set to 0 to disable simulated chat (auto-off when channel is set)
-  const channel  = qs.get('channel') || '';
-  const gameName = qs.get('game')     || 'ARC RAIDERS';
-  const gameMeta = qs.get('gameMeta') || 'lobby 7 · 2h 14m logged · “locked in”';
-  const target   = Number(qs.get('target')) || 50;
-  const tgtLbl   = qs.get('targetLabel') || `eyes on the ledge · ${target} concurrent witnesses`;
+  //   sim         — set to 0 to disable simulated chat (auto-off when channel is set)
+  const channel    = qs.get('channel')  || '';
+  const userGame   = qs.get('game');       // undefined if not set
+  const userMeta   = qs.get('gameMeta');   // undefined if not set
+  const gameName   = userGame || 'ARC RAIDERS';
+  const gameMeta   = userMeta || 'lobby 7 · 2h 14m logged · “locked in”';
+  const target     = Number(qs.get('target')) || 50;
+  const tgtLbl     = qs.get('targetLabel') || `eyes on the ledge · ${target} concurrent witnesses`;
 
   const root = document.getElementById('root');
 
@@ -61,10 +63,6 @@
   // Chat — live when channel param is set, otherwise simulated unless ?sim=0
   const simulate = channel ? false : (qs.get('sim') !== '0');
   const chat = LedgeWatch.chat(root, { simulate });
-  if (channel) {
-    LedgeWatch.twitchChat(channel, (m) => chat.add(m));
-    LedgeWatch.viewerPoll(channel, target, (pct) => goal.set(pct));
-  }
 
   // Game card — paper slip. Update text via window.setGame(title, meta)
   const card = document.createElement('div');
@@ -80,6 +78,28 @@
     card.querySelector('.title').textContent = title;
     if (meta) card.querySelector('.meta').textContent = meta;
   };
+
+  // Live Twitch wiring when channel is set
+  if (channel) {
+    LedgeWatch.twitchChat(channel, (m) => chat.add(m));
+    LedgeWatch.viewerPoll(channel, target, (pct) => goal.set(pct));
+
+    // Auto game/title/uptime from Twitch (unless user pinned via URL param)
+    LedgeWatch.streamInfoPoll(channel, (info) => {
+      if (!userGame && info.game) {
+        card.querySelector('.title').textContent = info.game.toUpperCase();
+      }
+      if (!userMeta) {
+        const short = info.title && info.title.length > 48
+          ? info.title.slice(0, 45).trim() + '…'
+          : info.title;
+        const parts = [];
+        if (info.uptime) parts.push(`${info.uptime} logged`);
+        if (short)       parts.push(`“${short}”`);
+        card.querySelector('.meta').textContent = parts.join(' · ');
+      }
+    });
+  }
 
   // Ticker
   LedgeWatch.ticker(root);
