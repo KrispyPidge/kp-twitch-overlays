@@ -1,0 +1,20 @@
+<!--
+  Ledge Watch · StreamElements bridge widget
+  Paste this (and widget.css + widget.js) into a StreamElements Custom Widget
+  inside a new SE Overlay.
+
+  Add an additional Custom Field of type "text" called `scene` so you can pick
+  which Ledge Watch scene this overlay represents. Valid values:
+    01-starting-soon · 02-brb · 03-ending · 04-in-game · 05-just-chatting
+    06-alerts-overlay · 07-goal-overlay · 08-ticker-overlay
+
+  Add another text field `extraParams` (optional, default empty) for things
+  like `hidecam=1` or `palette=midnight`.
+-->
+<div class="ledge-wrap">
+  <iframe id="ledge-frame"
+          src="about:blank"
+          frameborder="0"
+          allowtransparency="true"
+          scrolling="no"></iframe>
+</div>

@@ -1,0 +1,14 @@
+{
+  "scene": {
+    "type": "text",
+    "label": "Scene slug",
+    "value": "04-in-game",
+    "group": "Ledge Watch"
+  },
+  "extraParams": {
+    "type": "text",
+    "label": "Extra URL params (optional)",
+    "value": "",
+    "group": "Ledge Watch"
+  }
+}

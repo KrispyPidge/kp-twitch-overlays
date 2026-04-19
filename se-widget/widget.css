@@ -1,0 +1,21 @@
+/* Full-bleed transparent wrapper. The iframe is Ledge Watch, sized 1920×1080. */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 1920px;
+  height: 1080px;
+  background: transparent;
+  overflow: hidden;
+}
+.ledge-wrap {
+  position: absolute;
+  inset: 0;
+}
+#ledge-frame {
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+  border: 0;
+  background: transparent;
+}
