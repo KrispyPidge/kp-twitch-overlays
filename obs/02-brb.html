@@ -28,7 +28,19 @@
   const chat = LedgeWatch.chat(root, { simulate });
   if (channel) LedgeWatch.twitchChat(channel, (m) => chat.add(m));
 
+  // Alerts — mid-break subs/follows/raids still pop
+  const alertHost = LedgeWatch.alertHost(root);
+
   LedgeWatch.ticker(root);
+  LedgeWatch.bind({ alertHost, chat });
+
+  window.LedgeWatch_test = {
+    follow: () => alertHost.fire({ type: 'follow', name: 'flock_boss',     msg: 'followed the flock' }),
+    sub:    () => alertHost.fire({ type: 'sub',    name: 'breadwhisperer', amount: 'Tier 3 · 6mo', msg: 'resubbed · 6 months deep' }),
+    bits:   () => alertHost.fire({ type: 'bits',   name: 'TacticalRalph',  amount: '500 bits',     msg: 'tossed 500 bits' }),
+    donate: () => alertHost.fire({ type: 'donate', name: 'anonymous',      amount: '£25.00',       msg: 'buy yourself a sandwich' }),
+    raid:   () => alertHost.fire({ type: 'raid',   name: 'Vost0k_stream',  amount: '42 raiders',   msg: 'raiding with 42' }),
+  };
 </script>
 </body>
 </html>
