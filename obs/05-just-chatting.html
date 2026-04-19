@@ -16,14 +16,22 @@
   //   channel     — Twitch channel: enables live chat + viewer-count goal polling
   //   topic       — topic card title (HTML allowed, e.g. "STREAM<br/>TOPIC")
   //   topicBody   — topic card body text
+  //   topicSize   — sm / md / lg — title font size preset (default md)
+  //   topicWidth  — topic card width in px (default 420)
   //   target      — recon-quota target (default 50)
   //   targetLabel — override the caption beneath the goal title
   //   sim         — set to 0 to disable simulated chat (auto-off when channel is set)
-  const channel   = qs.get('channel')   || '';
-  const topicText = qs.get('topic')     || 'PIGEONS<br/>ARE <span style="background:var(--ink);color:var(--paper);padding:0 6px">STATE</span><br/>SURVEILLANCE?';
-  const topicBody = qs.get('topicBody') || 'a 3-hour deep dive. bring bread. bring questions. bring an aluminum foil hat.';
-  const target    = Number(qs.get('target')) || 50;
-  const tgtLbl    = qs.get('targetLabel') || `eyes on the ledge · ${target} concurrent witnesses`;
+  const channel    = qs.get('channel')   || '';
+  const topicText  = qs.get('topic')     || 'PIGEONS<br/>ARE <span style="background:var(--ink);color:var(--paper);padding:0 6px">STATE</span><br/>SURVEILLANCE?';
+  const topicBody  = qs.get('topicBody') || 'a 3-hour deep dive. bring bread. bring questions. bring an aluminum foil hat.';
+  const topicSize  = qs.get('topicSize') || 'md';
+  const topicWidth = Number(qs.get('topicWidth')) || 420;
+  const target     = Number(qs.get('target')) || 50;
+  const tgtLbl     = qs.get('targetLabel') || `eyes on the ledge · ${target} concurrent witnesses`;
+
+  // Title font size presets (keeps the card readable regardless of topic length)
+  const TOPIC_SIZES = { sm: 28, md: 36, lg: 44 };
+  const topicFont  = TOPIC_SIZES[topicSize] || TOPIC_SIZES.md;
 
   LedgeWatch.rooftop(root);
   LedgeWatch.topStrip(root);
@@ -60,17 +68,21 @@
     });
   }
 
-  // Topic card (paper slip)
+  // Topic card (paper slip). Word-wraps safely; size + width configurable via URL.
   const topic = document.createElement('div');
-  topic.style.cssText = 'position:absolute;top:150px;left:56px;width:420px;background:var(--paper);color:var(--ink);padding:22px 26px;transform:rotate(-2deg);box-shadow:6px 6px 0 rgba(0,0,0,0.6);font-family:Special Elite;z-index:30';
+  topic.style.cssText = `position:absolute;top:150px;left:56px;width:${topicWidth}px;background:var(--paper);color:var(--ink);padding:22px 26px;transform:rotate(-2deg);box-shadow:6px 6px 0 rgba(0,0,0,0.6);font-family:Special Elite;z-index:30;box-sizing:border-box;overflow-wrap:break-word;word-wrap:break-word;word-break:break-word`;
   topic.innerHTML = `
     <div style="background:var(--stamp);color:var(--paper);display:inline-block;padding:4px 10px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;transform:rotate(-3deg);margin-bottom:10px;box-shadow:2px 2px 0 rgba(0,0,0,0.3)">TOPIC · EVIDENCE</div>
-    <div class="title" style="font-family:'Rubik Mono One';font-size:44px;line-height:1;letter-spacing:1px">${topicText}</div>
-    <div class="body" style="font-size:16px;margin-top:14px;opacity:0.8">${topicBody}</div>`;
+    <div class="title" style="font-family:'Rubik Mono One';font-size:${topicFont}px;line-height:1.05;letter-spacing:1px;overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;hyphens:auto">${topicText}</div>
+    <div class="body" style="font-size:16px;margin-top:14px;opacity:0.8;overflow-wrap:break-word;word-wrap:break-word">${topicBody}</div>`;
   root.appendChild(topic);
   window.setTopic = (htmlTitle, htmlBody) => {
     topic.querySelector('.title').innerHTML = htmlTitle;
     if (htmlBody) topic.querySelector('.body').innerHTML = htmlBody;
+  };
+  window.setTopicSize = (size) => {
+    const f = TOPIC_SIZES[size] || TOPIC_SIZES.md;
+    topic.querySelector('.title').style.fontSize = f + 'px';
   };
 
   LedgeWatch.ticker(root);
