@@ -307,14 +307,18 @@
 
     // Anchor = ms timestamp of "stream started". Every scene reads the same key,
     // so UPTIME / ON AIR always match no matter when a source loaded.
+    // In-memory fallback for sandboxed iframes where localStorage throws or
+    // silently no-ops — otherwise the timer would freeze at 00:00:00 forever.
+    let memAnchor = null;
     function readAnchor() {
       try {
         const v = localStorage.getItem(anchorKey);
         if (v) { const n = Number(v); if (!isNaN(n) && n > 0) return n; }
       } catch (_) {}
-      return null;
+      return memAnchor;
     }
     function writeAnchor(ms) {
+      memAnchor = ms;
       try { localStorage.setItem(anchorKey, String(ms)); } catch (_) {}
     }
 

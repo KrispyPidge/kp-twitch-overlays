@@ -108,17 +108,9 @@ window.addEventListener('onEventReceived', (ev) => {
       });
       break;
 
-    case 'message': {
-      // SE chat event: forward as {kp:'chat',...} so chat boxes on scenes can show real msgs
-      const msg = d.data || {};
-      toLedge({
-        kp: 'chat',
-        u: msg.nick || msg.displayName || 'unknown',
-        c: (msg.tags && msg.tags.color) || '#f0a830',
-        m: msg.text || '',
-      });
-      break;
-    }
+    // 'message' intentionally NOT forwarded — scenes connect to Twitch IRC
+    // directly via LedgeWatch.twitchChat(). Forwarding SE chat events here
+    // would cause every message to render twice.
 
     default:
       console.log('[Ledge Watch] unhandled listener:', listener, '— payload:', d);
