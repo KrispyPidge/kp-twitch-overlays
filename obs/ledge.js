@@ -301,13 +301,37 @@
     host.appendChild(el);
     let t = startSeconds;
     const val = el.querySelector('.val');
-    function tick() {
+    function render() {
       const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
       val.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
-      t++;
     }
+    function tick() { render(); t++; }
     tick(); setInterval(tick, 1000);
-    return el;
+    // External setter — allows syncing to real stream uptime (e.g. from DecAPI)
+    function set(seconds) {
+      t = Math.max(0, Math.floor(Number(seconds) || 0));
+      render();
+    }
+    return { el, set };
+  }
+
+  // Parse DecAPI's uptime text ("2 hours, 15 minutes, 3 seconds" etc.) → seconds.
+  // Returns null for offline or unparseable.
+  function parseUptime(str) {
+    if (!str || typeof str !== 'string') return null;
+    if (/offline|not (currently )?live|no longer/i.test(str)) return null;
+    let total = 0, found = false;
+    const re = /(\d+)\s*(hours?|minutes?|seconds?|hrs?|mins?|secs?|h|m|s)\b/gi;
+    let match;
+    while ((match = re.exec(str)) !== null) {
+      const n = Number(match[1]);
+      const unit = match[2].toLowerCase();
+      if (unit.startsWith('h')) total += n * 3600;
+      else if (unit.startsWith('m')) total += n * 60;
+      else if (unit.startsWith('s')) total += n;
+      found = true;
+    }
+    return found ? total : null;
   }
 
   // ---- Countdown (for Starting scene) ----
@@ -571,7 +595,7 @@
   global.LedgeWatch = {
     rooftop, topStrip, goal, alertHost, timer, countdown, chat, cam, ticker, typo, bind,
     setPalette, applyAutoPalette,
-    twitchChat, viewerPoll, streamInfoPoll,
+    twitchChat, viewerPoll, streamInfoPoll, parseUptime,
     CHAT_POOL, THOUGHTS,
   };
 })(window);

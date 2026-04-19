@@ -43,8 +43,8 @@
   // at the same coords (40,130 · 380×280). Or append ?hidecam=1 to hide.
   LedgeWatch.cam(root, { x: 40, y: 130, w: 380, h: 280 });
 
-  // Uptime timer
-  LedgeWatch.timer(root, { label: 'UPTIME', startSeconds: 0 });
+  // Uptime timer (syncs to real Twitch stream uptime when channel is set)
+  const uptime = LedgeWatch.timer(root, { label: 'UPTIME', startSeconds: 0 });
 
   // Goal bar — RECON QUOTA (concurrent viewers). Update live via postMessage {kp:'goal', percent: N}
   const goal = LedgeWatch.goal(root, {
@@ -98,6 +98,9 @@
         if (short)       parts.push(`“${short}”`);
         card.querySelector('.meta').textContent = parts.join(' · ');
       }
+      // Sync UPTIME timer to real stream uptime (consistent across scene switches)
+      const upSec = LedgeWatch.parseUptime(info.uptime);
+      if (upSec !== null) uptime.set(upSec);
     });
   }
 
