@@ -57,6 +57,32 @@
   const ALERT_LABEL = { follow:'NEW · FLOCK', sub:'SUBBED', bits:'CRUMBS', donate:'BREAD', raid:'RAID' };
   const RANSOM_FONTS = ['Rubik Mono One','Bebas Neue','Special Elite','JetBrains Mono'];
 
+  // Resolve sound asset paths relative to this ledge.js file, so it works
+  // whether the scene HTML lives at /obs/04-in-game.html, inside an SE iframe,
+  // or anywhere else. Uses the script's own URL as a base.
+  const SCRIPT_URL = (document.currentScript && document.currentScript.src) || '';
+  const SOUND_DIR  = SCRIPT_URL ? new URL('./assets/sounds/', SCRIPT_URL).href : 'assets/sounds/';
+  const SOUND_MAP  = {
+    follow: SOUND_DIR + 'follow.mp3',
+    sub:    SOUND_DIR + 'sub.mp3',
+    bits:   SOUND_DIR + 'bits.mp3',
+    donate: SOUND_DIR + 'donate.mp3',
+    raid:   SOUND_DIR + 'raid.mp3',
+  };
+  const SOUND_VOL  = { follow: 0.6, sub: 0.9, bits: 0.75, donate: 0.85, raid: 0.85 };
+  const AUDIO_CACHE = {};
+  function playAlertSound(type) {
+    const src = SOUND_MAP[type]; if (!src) return;
+    try {
+      let a = AUDIO_CACHE[type];
+      if (!a) { a = new Audio(src); a.preload = 'auto'; AUDIO_CACHE[type] = a; }
+      a.volume = SOUND_VOL[type] != null ? SOUND_VOL[type] : 0.8;
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {/* autoplay blocked — silent fail */});
+    } catch (_) { /* noop */ }
+  }
+
   // ---- Rooftop background scene ----
   function rooftop(host) {
     const div = document.createElement('div');
@@ -244,6 +270,7 @@
     function fire({ type='follow', name='someone', amount='', msg='' }) {
       if (cur) cur.remove();
       if (timer) clearTimeout(timer);
+      playAlertSound(type);
       const card = document.createElement('div');
       card.className = 'alert';
       const nameHtml = [...name].map((ch, i) => {
