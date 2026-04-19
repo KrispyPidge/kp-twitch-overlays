@@ -230,7 +230,7 @@
     }
     const peck = document.createElement('div');
     peck.className = 'peck';
-    peck.innerHTML = pigeonSVG(36, '#8a8aa8', false);
+    peck.innerHTML = pigeonSVG(26, '#8a8aa8', false);
     track.appendChild(peck);
 
     let pct = 0;

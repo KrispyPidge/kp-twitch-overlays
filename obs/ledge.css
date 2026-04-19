@@ -109,27 +109,27 @@ body.with-bg { background: #060410; }      /* full-screen scenes only */
 
 /* ---------- Goal bar (paper slip with crumb pile) ---------- */
 .goal {
-  position: absolute; bottom: 150px; left: 40px; width: 560px;
+  position: absolute; bottom: 150px; left: 40px; width: 380px;
   background: var(--paper); color: var(--ink);
-  padding: 16px 20px 14px;
-  box-shadow: 5px 5px 0 rgba(0,0,0,0.55), 0 0 0 2px rgba(0,0,0,0.3);
+  padding: 10px 14px 10px;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.55), 0 0 0 2px rgba(0,0,0,0.3);
   transform: rotate(-1.2deg);
   font-family: 'Special Elite';
   z-index: 30;
 }
 .goal .stamp {
-  position: absolute; top: -14px; right: -12px;
-  background: var(--stamp); color: var(--paper); padding: 6px 14px;
-  font-family: 'JetBrains Mono'; font-size: 12px; letter-spacing: 3px; font-weight: 700;
+  position: absolute; top: -10px; right: -10px;
+  background: var(--stamp); color: var(--paper); padding: 3px 8px;
+  font-family: 'JetBrains Mono'; font-size: 9px; letter-spacing: 2px; font-weight: 700;
   transform: rotate(6deg); box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
 }
-.goal .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
-.goal .head .title { font-size: 26px; font-weight: 700; line-height: 1.1; flex: 1; }
-.goal .head .pct { font-family: 'Rubik Mono One'; font-size: 30px; color: var(--stamp); }
-.goal .head .pct .den { font-size: 17px; opacity: 0.6; }
-.goal .caption { font-size: 15px; letter-spacing: 1px; margin-top: 4px; margin-bottom: 12px; }
+.goal .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
+.goal .head .title { font-size: 17px; font-weight: 700; line-height: 1.05; flex: 1; letter-spacing: 0.5px; }
+.goal .head .pct { font-family: 'Rubik Mono One'; font-size: 22px; color: var(--stamp); line-height: 1; }
+.goal .head .pct .den { font-size: 12px; opacity: 0.6; }
+.goal .caption { font-size: 11px; letter-spacing: 0.5px; margin-top: 2px; margin-bottom: 8px; opacity: 0.85; }
 .goal .track {
-  position: relative; height: 68px; border-top: 2px dashed var(--ink); padding-top: 6px;
+  position: relative; height: 40px; border-top: 2px dashed var(--ink); padding-top: 4px;
 }
 .goal .crumb {
   position: absolute;
@@ -144,7 +144,7 @@ body.with-bg { background: #060410; }      /* full-screen scenes only */
   transform-origin: bottom center;
   transition: left 0.6s cubic-bezier(.2,1.4,.4,1);
 }
-.goal .foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px; opacity: 0.75; }
+.goal .foot { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; opacity: 0.75; gap: 8px; }
 
 /* ---------- Alert (ransom-note paper card) ---------- */
 .alert-host {
