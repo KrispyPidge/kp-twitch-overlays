@@ -294,25 +294,65 @@
 
   // ---- Timer ----
   function timer(host, opts) {
-    const { label = 'UPTIME', startSeconds = 0 } = opts || {};
+    const {
+      label = 'UPTIME',
+      startSeconds = 0,
+      anchorKey = 'kp_stream_start_ts', // shared across all Ledge Watch scenes
+    } = opts || {};
     const el = document.createElement('div');
     el.className = 'timer';
     el.innerHTML = `<div class="lbl">⏱ ${label}</div><div class="val">00:00:00</div>`;
     host.appendChild(el);
-    let t = startSeconds;
     const val = el.querySelector('.val');
+
+    // Anchor = ms timestamp of "stream started". Every scene reads the same key,
+    // so UPTIME / ON AIR always match no matter when a source loaded.
+    function readAnchor() {
+      try {
+        const v = localStorage.getItem(anchorKey);
+        if (v) { const n = Number(v); if (!isNaN(n) && n > 0) return n; }
+      } catch (_) {}
+      return null;
+    }
+    function writeAnchor(ms) {
+      try { localStorage.setItem(anchorKey, String(ms)); } catch (_) {}
+    }
+
+    // Seed / force-reset anchor:
+    //  - first scene this session: seed to "now - startSeconds"
+    //  - any scene loaded with ?resetTimer=1: force fresh 00:00:00
+    const forceReset = new URLSearchParams(location.search).get('resetTimer') === '1';
+    if (forceReset || readAnchor() === null) writeAnchor(Date.now() - startSeconds * 1000);
+
     function render() {
+      const anchor = readAnchor();
+      if (anchor === null) { val.textContent = '00:00:00'; return; }
+      const t = Math.max(0, Math.floor((Date.now() - anchor) / 1000));
       const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
       val.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
     }
-    function tick() { render(); t++; }
-    tick(); setInterval(tick, 1000);
-    // External setter — allows syncing to real stream uptime (e.g. from DecAPI)
+    render();
+    setInterval(render, 1000);
+
+    // External setter — sync to real stream uptime (e.g. from DecAPI polling).
+    // Writing to localStorage means every other scene picks it up on next render.
     function set(seconds) {
-      t = Math.max(0, Math.floor(Number(seconds) || 0));
+      const sec = Math.max(0, Math.floor(Number(seconds) || 0));
+      writeAnchor(Date.now() - sec * 1000);
       render();
     }
-    return { el, set };
+    // Reset — clears the anchor so timers start from 0 again.
+    function reset() {
+      try { localStorage.removeItem(anchorKey); } catch (_) {}
+      writeAnchor(Date.now());
+      render();
+    }
+    return { el, set, reset };
+  }
+
+  // Manual timer reset (for stream start). Clears the shared anchor.
+  function resetTimer(anchorKey) {
+    try { localStorage.removeItem(anchorKey || 'kp_stream_start_ts'); } catch (_) {}
   }
 
   // Parse DecAPI's uptime text ("2 hours, 15 minutes, 3 seconds" etc.) → seconds.
@@ -595,7 +635,7 @@
   global.LedgeWatch = {
     rooftop, topStrip, goal, alertHost, timer, countdown, chat, cam, ticker, typo, bind,
     setPalette, applyAutoPalette,
-    twitchChat, viewerPoll, streamInfoPoll, parseUptime,
+    twitchChat, viewerPoll, streamInfoPoll, parseUptime, resetTimer,
     CHAT_POOL, THOUGHTS,
   };
 })(window);
