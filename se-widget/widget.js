@@ -49,6 +49,9 @@ function resolveTier(d) {
 window.addEventListener('onEventReceived', (ev) => {
   const listener = ev.detail && ev.detail.listener;
   const d = (ev.detail && ev.detail.event) || {};
+  // Debug log — so you can inspect what SE is actually sending to the widget.
+  // View this by right-clicking the OBS browser source → Interact → F12 → Console.
+  console.log('[Ledge Watch] SE event:', listener, d);
 
   switch (listener) {
     case 'follower-latest':
@@ -118,8 +121,7 @@ window.addEventListener('onEventReceived', (ev) => {
     }
 
     default:
-      // uncomment while debugging:
-      // console.debug('[Ledge Watch] unhandled SE event', listener, d);
+      console.log('[Ledge Watch] unhandled listener:', listener, '— payload:', d);
       break;
   }
 });
