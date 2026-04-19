@@ -9,6 +9,12 @@
 <div id="root" style="position:absolute;inset:0"></div>
 <script src="ledge.js"></script>
 <script>
+  const qs = new URLSearchParams(location.search);
+  // URL params:
+  //   channel — Twitch channel for live chat (shoutouts + raid chatter stay visible)
+  //   sim     — set to 0 to disable sim chat when no channel provided
+  const channel = qs.get('channel') || '';
+
   const root = document.getElementById('root');
   LedgeWatch.rooftop(root);
   LedgeWatch.topStrip(root);
@@ -16,6 +22,12 @@
     'archive sealed. tapes confiscated.',
     'thanks for being part of the evidence. coo.',
   ], { logo: 'assets/logo.png' });
+
+  // Chat — stays visible while shoutouts/raid target are queued
+  const simulate = channel ? false : (qs.get('sim') !== '0');
+  const chat = LedgeWatch.chat(root, { simulate });
+  if (channel) LedgeWatch.twitchChat(channel, (m) => chat.add(m));
+
   LedgeWatch.ticker(root);
 </script>
 </body>

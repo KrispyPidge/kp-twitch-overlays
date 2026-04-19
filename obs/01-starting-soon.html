@@ -9,17 +9,25 @@
 <div id="root" style="position:absolute;inset:0"></div>
 <script src="ledge.js"></script>
 <script>
+  const qs = new URLSearchParams(location.search);
+  // URL params:
+  //   channel   — Twitch channel for live pre-stream chat (keeps community warm)
+  //   countdown — minutes for countdown (default 5)
+  //   sim       — set to 0 to disable sim chat when no channel provided
+  const channel   = qs.get('channel') || '';
+  const countMin  = Number(qs.get('countdown')) || 5;
+
   const root = document.getElementById('root');
   LedgeWatch.rooftop(root);
   LedgeWatch.topStrip(root);
 
   // Big ransom-note STARTING with a live countdown
   const typoEl = LedgeWatch.typo(root, 'STARTING', [
-    '◆ ◆ ◆  begins in 05:00  ◆ ◆ ◆',
+    `◆ ◆ ◆  begins in ${String(countMin).padStart(2,'0')}:00  ◆ ◆ ◆`,
     'subject approaching the ledge. do not adjust your set.',
   ], { logo: 'assets/logo.png' });
   // Wire up countdown into the first sub line
-  let t = 5 * 60;
+  let t = countMin * 60;
   const pad = (n) => String(n).padStart(2, '0');
   const line1 = typoEl.querySelector('.sub div:first-child');
   setInterval(() => {
@@ -27,6 +35,11 @@
     const m = Math.floor(t/60), s = t % 60;
     line1.textContent = `◆ ◆ ◆  begins in ${pad(m)}:${pad(s)}  ◆ ◆ ◆`;
   }, 1000);
+
+  // Pre-stream chat — keeps community visible before going live
+  const simulate = channel ? false : (qs.get('sim') !== '0');
+  const chat = LedgeWatch.chat(root, { simulate });
+  if (channel) LedgeWatch.twitchChat(channel, (m) => chat.add(m));
 
   LedgeWatch.ticker(root);
 </script>

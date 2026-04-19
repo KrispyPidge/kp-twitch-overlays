@@ -9,6 +9,12 @@
 <div id="root" style="position:absolute;inset:0"></div>
 <script src="ledge.js"></script>
 <script>
+  const qs = new URLSearchParams(location.search);
+  // URL params:
+  //   channel — Twitch channel for live chat (community stays visible during breaks)
+  //   sim     — set to 0 to disable sim chat when no channel provided
+  const channel = qs.get('channel') || '';
+
   const root = document.getElementById('root');
   LedgeWatch.rooftop(root);
   LedgeWatch.topStrip(root);
@@ -16,6 +22,12 @@
     'subject has flown off. feed continues.',
     '(leave bread. do not look directly at camera.)',
   ], { logo: 'assets/logo.png' });
+
+  // Chat — keeps community alive during the break
+  const simulate = channel ? false : (qs.get('sim') !== '0');
+  const chat = LedgeWatch.chat(root, { simulate });
+  if (channel) LedgeWatch.twitchChat(channel, (m) => chat.add(m));
+
   LedgeWatch.ticker(root);
 </script>
 </body>
