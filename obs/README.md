@@ -16,7 +16,9 @@ obs/
 ├── 05-just-chatting.html      # full-screen (webcam slot centered)
 ├── 06-alerts-overlay.html     # transparent, alerts only (reusable on any scene)
 ├── 07-goal-overlay.html       # transparent, goal bar only (reusable)
-└── 08-ticker-overlay.html     # transparent, bottom ticker only (reusable)
+├── 08-ticker-overlay.html     # transparent, bottom ticker only (reusable)
+├── 09-cam-frame.html          # transparent, minimal frame for the real webcam
+└── 10-transmission.html       # transparent, timed "INCOMING" pop-in
 ```
 
 ## OBS Scene plan

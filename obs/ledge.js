@@ -404,16 +404,23 @@
     el.innerHTML = `<div class="hdr">⟫ INTERCEPTED COMMS · LIVE</div><div class="list"></div>`;
     host.appendChild(el);
     const list = el.querySelector('.list');
+    // Live mode: keep the box invisible until the first real message lands,
+    // so an empty "INTERCEPTED COMMS" frame never sits on screen.
+    if (!simulate) el.style.opacity = '0';
     function add({ u, c, m }) {
+      el.style.opacity = '';
       const row = document.createElement('div');
       row.className = 'msg';
       row.innerHTML = `<span class="u" style="color:${c}">${u}</span><span class="sep">›</span><span class="c">${escapeHtml(m)}</span>`;
       list.appendChild(row);
       while (list.children.length > max) list.firstChild.remove();
     }
-    // seed
-    for (let i = 0; i < Math.min(4, CHAT_POOL.length); i++) {
-      const [u, c, m] = CHAT_POOL[i]; add({ u, c, m });
+    // seed with sample lines ONLY in sim mode. With a live channel the box starts
+    // empty, so viewers never see made-up usernames as if they were real chat.
+    if (simulate) {
+      for (let i = 0; i < Math.min(4, CHAT_POOL.length); i++) {
+        const [u, c, m] = CHAT_POOL[i]; add({ u, c, m });
+      }
     }
     if (simulate) {
       setInterval(() => {

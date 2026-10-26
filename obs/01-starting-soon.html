@@ -12,29 +12,56 @@
   const qs = new URLSearchParams(location.search);
   // URL params:
   //   channel   — Twitch channel for live pre-stream chat (keeps community warm)
-  //   countdown — minutes for countdown (default 5)
+  //   startAt   — "auto" (default when countdown is not set): counts down to the
+  //               scheduled go-live, Saturday 10:00, other days 19:30 (UK clock).
+  //               Or a fixed time, e.g. startAt=20:00
+  //   countdown — minutes, counted from when the source loads (legacy; OBS keeps
+  //               sources loaded, so this often hits 00:00 before you switch over)
   //   sim       — set to 0 to disable sim chat when no channel provided
   const channel   = qs.get('channel') || '';
-  const countMin  = Number(qs.get('countdown')) || 5;
+  const countMin  = Number(qs.get('countdown')) || 0;
+  const startAt   = (qs.get('startAt') || (countMin ? '' : 'auto')).trim();
 
   const root = document.getElementById('root');
   LedgeWatch.rooftop(root);
   LedgeWatch.topStrip(root);
 
-  // Big ransom-note STARTING with a live countdown
   const typoEl = LedgeWatch.typo(root, 'STARTING', [
-    `◆ ◆ ◆  begins in ${String(countMin).padStart(2,'0')}:00  ◆ ◆ ◆`,
+    '◆ ◆ ◆  stand by  ◆ ◆ ◆',
     'subject approaching the ledge. do not adjust your set.',
   ], { logo: 'assets/logo.png' });
-  // Wire up countdown into the first sub line
-  let t = countMin * 60;
-  const pad = (n) => String(n).padStart(2, '0');
   const line1 = typoEl.querySelector('.sub div:first-child');
-  setInterval(() => {
-    if (t > 0) t--;
-    const m = Math.floor(t/60), s = t % 60;
-    line1.textContent = `◆ ◆ ◆  begins in ${pad(m)}:${pad(s)}  ◆ ◆ ◆`;
-  }, 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+
+  // Work out the target time. Returns a Date, or null when we should just say "stand by".
+  function targetTime() {
+    const now = new Date();
+    if (startAt) {
+      let hh, mm;
+      if (startAt.toLowerCase() === 'auto') {
+        const sat = now.getDay() === 6;
+        hh = sat ? 10 : 19; mm = sat ? 0 : 30;
+      } else {
+        const m = startAt.match(/^(\d{1,2}):?(\d{2})$/);
+        if (!m) return null;
+        hh = Number(m[1]); mm = Number(m[2]);
+      }
+      const t = new Date(now); t.setHours(hh, mm, 0, 0);
+      return t;
+    }
+    if (countMin) { return new Date(loadedAt + countMin * 60000); }
+    return null;
+  }
+  const loadedAt = Date.now();
+  function render() {
+    const t = targetTime();
+    if (!t) { line1.textContent = '◆ ◆ ◆  stand by  ◆ ◆ ◆'; return; }
+    const left = Math.round((t - Date.now()) / 1000);
+    if (left <= 0) { line1.textContent = '◆ ◆ ◆  going live any second  ◆ ◆ ◆'; return; }
+    if (left > 60 * 60) { line1.textContent = '◆ ◆ ◆  stand by  ◆ ◆ ◆'; return; } // off-schedule stream
+    line1.textContent = `◆ ◆ ◆  begins in ${pad(Math.floor(left / 60))}:${pad(left % 60)}  ◆ ◆ ◆`;
+  }
+  render(); setInterval(render, 1000);
 
   // Pre-stream chat — keeps community visible before going live
   const simulate = channel ? false : (qs.get('sim') !== '0');

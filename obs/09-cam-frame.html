@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KP · Cam Frame (transparent)</title>
+<link rel="stylesheet" href="ledge.css">
+<!--
+  Minimal Ledge Watch frame for the real webcam on gameplay scenes.
+  Corner brackets + REC tag + live clock. Nothing else. Follows the auto palette
+  (amber by day, icy blue after 19:00) like every other Ledge Watch scene.
+
+  OBS: Browser Source, URL
+    https://krispypidge.github.io/kp-twitch-overlays/obs/09-cam-frame.html
+  Source Width = w + 2*pad, Height = h + 2*pad (defaults 360x270, pad 10 -> 380 x 290).
+  Put it above the webcam and group the two so they move together.
+
+  Params: w, h, pad, label (default CAM-07), clock=0 to hide the clock,
+          scan (scanline strength 0..1, default 0.35), palette=dawn|dusk|midnight
+-->
+<style>
+  html, body { width: auto; height: auto; background: transparent; overflow: hidden; }
+  :root { --w: 360px; --h: 270px; --pad: 10px; --bk: 22px; --ln: 3px; --scan: .35; }
+  .frame { position: relative; width: calc(var(--w) + var(--pad) * 2); height: calc(var(--h) + var(--pad) * 2); }
+  .c { position: absolute; width: var(--bk); height: var(--bk); border: 0 solid var(--hl);
+       filter: drop-shadow(0 0 6px var(--hl)) drop-shadow(0 0 2px rgba(0,0,0,.9)); }
+  .tl { top: 0; left: 0;     border-top-width: var(--ln);    border-left-width: var(--ln); }
+  .tr { top: 0; right: 0;    border-top-width: var(--ln);    border-right-width: var(--ln); }
+  .bl { bottom: 0; left: 0;  border-bottom-width: var(--ln); border-left-width: var(--ln); }
+  .br { bottom: 0; right: 0; border-bottom-width: var(--ln); border-right-width: var(--ln); }
+  .win { position: absolute; left: var(--pad); top: var(--pad); width: var(--w); height: var(--h); overflow: hidden; }
+  .win::after { content: ""; position: absolute; inset: 0; opacity: var(--scan);
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,.28) 0 1px, transparent 1px 3px); }
+  .tag { position: absolute; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+         background: rgba(6,4,16,.78); color: var(--hl); font-family: 'JetBrains Mono';
+         font-weight: 700; font-size: 11px; letter-spacing: 3px; line-height: 1; padding: 5px 8px; }
+  .tag.top { left: calc(var(--pad) + 6px); top: calc(var(--pad) + 6px); }
+  .tag.bot { right: calc(var(--pad) + 6px); bottom: calc(var(--pad) + 6px); font-weight: 500; letter-spacing: 2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff4040; box-shadow: 0 0 6px #ff4040;
+         animation: kp-red-blink 1.3s ease-in-out infinite; }
+  .sep { color: rgba(255,255,255,.4); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="win"></div>
+  <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+  <div class="tag top"><span class="dot"></span><span>REC</span><span class="sep">|</span><span id="label">CAM-07</span></div>
+  <div class="tag bot" id="clockTag"><span id="clock">00:00:00</span></div>
+</div>
+<script src="ledge.js"></script>
+<script>
+  const qs = new URLSearchParams(location.search);
+  const css = document.documentElement.style;
+  const num = (k, d) => { const v = parseFloat(qs.get(k)); return isNaN(v) ? d : v; };
+  css.setProperty('--w',   num('w', 360) + 'px');
+  css.setProperty('--h',   num('h', 270) + 'px');
+  css.setProperty('--pad', num('pad', 10) + 'px');
+  css.setProperty('--scan', Math.max(0, Math.min(1, num('scan', 0.35))));
+  if (qs.get('label')) document.getElementById('label').textContent = qs.get('label').toUpperCase().slice(0, 18);
+  if (qs.get('clock') === '0') {
+    document.getElementById('clockTag').style.display = 'none';
+  } else {
+    const el = document.getElementById('clock');
+    const p = (n) => String(n).padStart(2, '0');
+    const tick = () => { const d = new Date(); el.textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+    tick(); setInterval(tick, 1000);
+  }
+</script>
+</body>
+</html>
