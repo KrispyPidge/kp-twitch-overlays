@@ -35,8 +35,9 @@ Use the `window.*` helpers via a Streamer.bot JS action or OBS "Interact" DevToo
 
 | Param | Values | Effect |
 |---|---|---|
-| `channel` | string | Pre-stream live chat |
-| `countdown` | minutes, e.g. `10` | Countdown length (default 5) |
+| `channel` | string | Pre-stream live chat (box stays hidden until the first real message) |
+| `startAt` | `auto` · `HH:MM` | Count down to a clock time. `auto` = Sat 10:00, other days 19:30. Default when `countdown` is not set. Shows "going live any second" once the time passes, "stand by" if the time is over an hour away |
+| `countdown` | minutes, e.g. `10` | Legacy: counts from when the source loads, so it can hit zero before you switch to the scene. Prefer `startAt` |
 | `sim` | `0` | Disable sim chat |
 | `palette` | dawn/dusk/midnight | Force palette |
 
@@ -134,6 +135,34 @@ window.hideTopic(false)                // show
 
 ---
 
+## 09 · Cam Frame (transparent, minimal)
+
+Brackets + REC tag + clock for the real webcam. Follows the palette. Source size = (w + 2·pad) × (h + 2·pad), default **380 × 290**. Group it with the webcam in OBS.
+
+| Param | Values | Effect |
+|---|---|---|
+| `w`, `h` | px | Cam size inside the frame (default 360 × 270) |
+| `pad` | px | Gap between cam edge and brackets (default 10) |
+| `label` | text | Tag text (default `CAM-07`) |
+| `clock` | `0` | Hide the clock |
+| `scan` | 0 to 1 | Scanline strength over the cam (default 0.35, `0` = off) |
+
+---
+
+## 10 · Transmission pop-in (transparent)
+
+"INCOMING" strip that slides in for a few seconds, shows one message, then leaves. Source **1000 × 90**, top-left.
+
+| Param | Values | Effect |
+|---|---|---|
+| `every` | minutes | Gap between appearances (default 20) |
+| `show` | seconds | Time on screen (default 12) |
+| `first` | minutes | Delay before the first one (default 4) |
+| `msgs` | text, `\|`-separated | Override the built-in messages |
+| `test` | `1` | Preview: every 20 s. Remove after positioning |
+
+---
+
 ## Quick recipes
 
 **"Webcam is off — don't want the floating game card":**
@@ -151,10 +180,11 @@ hidecam=1&channel=krispypidgeon&hidegame=1&hidegoal=1&hidechat=1&hidetimer=1
 hidecam=1&channel=krispypidgeon&topic=FOUR HOURS OF PIGEON CONSPIRACIES&topicSize=sm&topicWidth=500
 ```
 
-**"Start with 10-min countdown":**
+**"Count down to tonight's go-live":**
 ```
-channel=krispypidgeon&countdown=10
+channel=krispypidgeon&startAt=auto
 ```
+(or `startAt=20:00` for a one-off time)
 
 **"Test the look with a specific palette":**
 ```
