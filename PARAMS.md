@@ -36,8 +36,9 @@ Use the `window.*` helpers via a Streamer.bot JS action or OBS "Interact" DevToo
 | Param | Values | Effect |
 |---|---|---|
 | `channel` | string | Pre-stream live chat (box stays hidden until the first real message) |
-| `startAt` | `auto` · `HH:MM` | Count down to a clock time. `auto` = Sat 10:00, other days 19:30. Default when `countdown` is not set. Shows "going live any second" once the time passes, "stand by" if the time is over an hour away |
-| `countdown` | minutes, e.g. `10` | Legacy: counts from when the source loads, so it can hit zero before you switch to the scene. Prefer `startAt` |
+| `startAt` | `auto` · `HH:MM` | `auto` (default): count down to the next slot on the channel's **Twitch schedule** (needs `channel`). `HH:MM` = fixed one-off time, overrides the schedule. Shows "going live any second" once the slot starts, "stand by" if it's over an hour away or Twitch can't be reached |
+| `liveCountdown` | minutes (default `7`) | Once Twitch shows you're live, count down this long from the go-live moment (time to run an ad before switching scenes) |
+| `countdown` | minutes, e.g. `10` | Legacy: counts from when the source loads. Prefer `startAt` |
 | `sim` | `0` | Disable sim chat |
 | `palette` | dawn/dusk/midnight | Force palette |
 
