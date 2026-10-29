@@ -11,16 +11,20 @@
 <script>
   const qs = new URLSearchParams(location.search);
   // URL params:
-  //   channel   — Twitch channel for live pre-stream chat (keeps community warm)
-  //   startAt   — "auto" (default when countdown is not set): counts down to the
-  //               scheduled go-live, Saturday 10:00, other days 19:30 (UK clock).
-  //               Or a fixed time, e.g. startAt=20:00
-  //   countdown — minutes, counted from when the source loads (legacy; OBS keeps
-  //               sources loaded, so this often hits 00:00 before you switch over)
-  //   sim       — set to 0 to disable sim chat when no channel provided
-  const channel   = qs.get('channel') || '';
+  //   channel       Twitch channel. Enables live chat AND the smart countdown below.
+  //   startAt       "auto" (default): read the next slot from the channel's Twitch schedule.
+  //                 Or a fixed one-off time, e.g. startAt=20:00 (overrides the schedule).
+  //   liveCountdown minutes to count down once Twitch shows the channel is live (default 7,
+  //                 leaves room to run an ad so pre-rolls don't hit people joining)
+  //   countdown     legacy: minutes from when the source loads. Prefer startAt.
+  //   sim           set to 0 to disable sim chat when no channel provided
+  //
+  // Countdown priority: live (go-live + liveCountdown) > fixed startAt=HH:MM > Twitch
+  // schedule > legacy countdown > "stand by". It never shows a made-up time.
+  const channel   = (qs.get('channel') || '').toLowerCase().replace(/^#/, '');
   const countMin  = Number(qs.get('countdown')) || 0;
   const startAt   = (qs.get('startAt') || (countMin ? '' : 'auto')).trim();
+  const liveMin   = qs.has('liveCountdown') ? Math.max(0, Number(qs.get('liveCountdown')) || 0) : 7;
 
   const root = document.getElementById('root');
   LedgeWatch.rooftop(root);
@@ -32,33 +36,60 @@
   ], { logo: 'assets/logo.png' });
   const line1 = typoEl.querySelector('.sub div:first-child');
   const pad = (n) => String(n).padStart(2, '0');
+  const loadedAt = Date.now();
 
-  // Work out the target time. Returns a Date, or null when we should just say "stand by".
+  // ---- Twitch state (public data, no login). Unofficial endpoint: if it ever
+  // changes or fails, state stays null and we fall back to "stand by".
+  const twitch = { liveSince: null, segments: null };
+  async function pollTwitch() {
+    if (!channel) return;
+    try {
+      const q = `query{user(login:"${channel}"){stream{createdAt} channel{schedule{segments{startAt endAt}}}}}`;
+      const r = await fetch('https://gql.twitch.tv/gql', {
+        method: 'POST',
+        headers: { 'Client-ID': 'kimne78kx3ncx6brgo4mv6wki5h1ko', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      });
+      const u = (await r.json())?.data?.user;
+      if (!u) return;
+      twitch.liveSince = u.stream?.createdAt ? new Date(u.stream.createdAt) : null;
+      const segs = u.channel?.schedule?.segments;
+      if (Array.isArray(segs)) {
+        twitch.segments = segs.map(s => ({ start: new Date(s.startAt), end: s.endAt ? new Date(s.endAt) : null }))
+                              .filter(s => !isNaN(s.start)).sort((x, y) => x.start - y.start);
+      }
+    } catch (_) { /* keep last known state */ }
+  }
+  pollTwitch(); setInterval(pollTwitch, 30 * 1000);
+
+  // Returns a Date to count down to, 'soon' for "going live any second", or null for "stand by".
   function targetTime() {
     const now = new Date();
-    if (startAt) {
-      let hh, mm;
-      if (startAt.toLowerCase() === 'auto') {
-        const sat = now.getDay() === 6;
-        hh = sat ? 10 : 19; mm = sat ? 0 : 30;
-      } else {
-        const m = startAt.match(/^(\d{1,2}):?(\d{2})$/);
-        if (!m) return null;
-        hh = Number(m[1]); mm = Number(m[2]);
-      }
-      const t = new Date(now); t.setHours(hh, mm, 0, 0);
+    // 1. Live: short countdown from the real go-live moment
+    if (twitch.liveSince) return new Date(twitch.liveSince.getTime() + liveMin * 60000);
+    // 2. Fixed one-off time
+    if (startAt && startAt.toLowerCase() !== 'auto') {
+      const m = startAt.match(/^(\d{1,2}):?(\d{2})$/);
+      if (!m) return null;
+      const t = new Date(now); t.setHours(Number(m[1]), Number(m[2]), 0, 0);
       return t;
     }
-    if (countMin) { return new Date(loadedAt + countMin * 60000); }
+    // 3. Twitch schedule: the slot we're in, or the next one
+    if (startAt && twitch.segments) {
+      const seg = twitch.segments.find(s => (s.end || new Date(s.start.getTime() + 4 * 3600e3)) > now);
+      if (!seg) return null;
+      return seg.start;
+    }
+    // 4. Legacy minutes-from-load
+    if (countMin) return new Date(loadedAt + countMin * 60000);
     return null;
   }
-  const loadedAt = Date.now();
   function render() {
     const t = targetTime();
     if (!t) { line1.textContent = '◆ ◆ ◆  stand by  ◆ ◆ ◆'; return; }
     const left = Math.round((t - Date.now()) / 1000);
     if (left <= 0) { line1.textContent = '◆ ◆ ◆  going live any second  ◆ ◆ ◆'; return; }
-    if (left > 60 * 60) { line1.textContent = '◆ ◆ ◆  stand by  ◆ ◆ ◆'; return; } // off-schedule stream
+    if (left > 60 * 60) { line1.textContent = '◆ ◆ ◆  stand by  ◆ ◆ ◆'; return; } // more than an hour out
     line1.textContent = `◆ ◆ ◆  begins in ${pad(Math.floor(left / 60))}:${pad(left % 60)}  ◆ ◆ ◆`;
   }
   render(); setInterval(render, 1000);
